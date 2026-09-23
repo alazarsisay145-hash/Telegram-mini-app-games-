@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BANNED
+}
+
+enum GameStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum GameType {
+  KENO
+  DICE
+  NUMBER_GUESS
+}
+
+enum WalletTransactionType {
+  WELCOME_BONUS
+  DAILY_BONUS
+  PROMO_GRANT
+  ADMIN_GRANT
+  GAME_STAKE
+  GAME_REWARD
+}
+
+enum ReferenceType {
+  GAME
+  BONUS
+  ADMIN
+  SYSTEM
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT
+}
+
+model User {
+  id           String      @id @default(uuid())
+  telegramId   String      @unique
+  username     String?
+  firstName    String
+  lastName     String?
+  avatarUrl    String?
+  status       UserStatus  @default(ACTIVE)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  lastSeenAt   DateTime?
+  wallet       Wallet?
+  games        Game[]
+  bonuses      DailyBonus[]
+  adminUser    AdminUser?
+  sessions     Session[]
+  auditEntries AuditLog[]  @relation("ActorAuditLogs")
+  leaderboardEntries LeaderboardEntry[]
+
+  @@index([telegramId])
+  @@map("users")
+}
+
+model Wallet {
+  id           String              @id @default(uuid())
+  userId       String              @unique
+  balance      Int                 @default(0)
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+
+  @@index([userId])
+  @@map("wallets")
+}
+
+model WalletTransaction {
+  id            String                @id @default(uuid())
+  transactionId String                @unique
+  userId        String
+  walletId      String
+  type          WalletTransactionType
+  amount        Int
+  balanceBefore Int
+  balanceAfter  Int
+  referenceType ReferenceType
+  referenceId   String
+  description   String
+  createdAt     DateTime              @default(now())
+  wallet        Wallet                @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([transactionId])
+  @@map("wallet_transactions")
+}
+
+model Game {
+  id              String     @id @default(uuid())
+  userId          String
+  gameType        GameType
+  stake           Int
+  selectedNumbers Int[]
+  drawNumbers     Int[]
+  matches         Int        @default(0)
+  payout          Int        @default(0)
+  status          GameStatus @default(PENDING)
+  idempotencyKey  String
+  createdAt       DateTime   @default(now())
+  completedAt     DateTime?
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([id])
+  @@map("games")
+}
+
+model GameConfig {
+  id          String   @id @default(uuid())
+  gameType    GameType @unique
+  enabled     Boolean  @default(true)
+  config      Json
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("game_configs")
+}
+
+model DailyBonus {
+  id             String   @id @default(uuid())
+  userId         String
+  amount         Int
+  claimDate      String
+  idempotencyKey String
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, claimDate])
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("daily_bonuses")
+}
+
+model LeaderboardEntry {
+  id         String   @id @default(uuid())
+  userId     String
+  window     String
+  score      Int
+  periodKey  String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, window, periodKey])
+  @@index([userId])
+  @@map("leaderboard_entries")
+}
+
+model AdminUser {
+  id        String    @id @default(uuid())
+  userId     String   @unique
+  role      AdminRole
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_users")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  actorUserId String?
+  targetId    String?
+  action      String
+  metadata    Json
+  createdAt   DateTime @default(now())
+  actor       User?    @relation("ActorAuditLogs", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  userId       String
+  tokenId     String   @unique
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}

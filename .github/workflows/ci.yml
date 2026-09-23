@@ -1,0 +1,30 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run typecheck
+      - run: npm run test -w @nexus/game-engine
+      - run: npm run test -w @nexus/api
+      - run: npm run build
+        env:
+          DATABASE_URL: ******localhost:5432/nexus_games?schema=public
+          TELEGRAM_BOT_TOKEN: 123456:TEST_TEST_TEST_TEST
+          TELEGRAM_WEBAPP_URL: http://localhost:3000
+          JWT_SECRET: super-secret-token-value
+          ADMIN_SECRET: another-super-secret
+          NEXT_PUBLIC_API_BASE_URL: http://localhost:4000
+          NODE_ENV: production
