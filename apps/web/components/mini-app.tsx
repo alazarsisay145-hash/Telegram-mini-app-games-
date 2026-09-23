@@ -237,7 +237,12 @@ export const MiniApp = () => {
       <Card>
         <div className="flex items-center justify-between">
           <SectionTitle>Daily Bonus</SectionTitle>
-          <button type="button" className="text-sm font-semibold text-cyan-300" onClick={claimBonus}>
+          <button
+            type="button"
+            className="text-sm font-semibold text-cyan-300 disabled:text-slate-500"
+            disabled={!bonusStatus?.canClaim || loading}
+            onClick={claimBonus}
+          >
             Claim now
           </button>
         </div>

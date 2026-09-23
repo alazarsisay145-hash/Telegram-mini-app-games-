@@ -35,6 +35,10 @@ export const AdminConsole = () => {
       setMessage(dashboardPayload.error.message);
       return;
     }
+    if (!usersPayload.success) {
+      setMessage(usersPayload.error.message);
+      return;
+    }
     setDashboard(dashboardPayload.data);
     setUsers(usersPayload.data ?? []);
     setMessage('Protected admin data loaded.');

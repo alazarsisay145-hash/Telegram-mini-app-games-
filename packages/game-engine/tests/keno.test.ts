@@ -20,6 +20,10 @@ describe('KenoEngine', () => {
     expect(Math.max(...draw)).toBeLessThanOrEqual(80);
   });
 
+  it('rejects invalid draw ranges', () => {
+    expect(() => drawUniqueNumbers(5, 6)).toThrowError('INVALID_DRAW_CONFIGURATION');
+  });
+
   it('calculates payout from the configured table', () => {
     const result = { drawNumbers: [1, 2, 5], matches: 2, multiplier: 2, payout: 200 };
     expect(engine.calculateReward({ stake: 100, selectedNumbers: [1, 2, 3], payoutTable }, result)).toBe(200);

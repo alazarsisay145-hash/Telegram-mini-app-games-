@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
 
 const parseInitData = (initData: string): URLSearchParams => new URLSearchParams(initData);
 
@@ -19,7 +19,10 @@ export const verifyTelegramInitData = (initData: string, botToken: string): Reco
   const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
   const signature = createHmac('sha256', secret).update(dataCheckString).digest('hex');
 
-  if (signature !== hash) {
+  if (
+    signature.length !== hash.length ||
+    !timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(hash, 'hex'))
+  ) {
     throw new Error('AUTH_INVALID');
   }
 

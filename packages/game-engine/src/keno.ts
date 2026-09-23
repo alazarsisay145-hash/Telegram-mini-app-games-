@@ -43,6 +43,10 @@ export class KenoEngine {
 }
 
 export const drawUniqueNumbers = (max: number, count: number): number[] => {
+  if (count > max) {
+    throw new Error('INVALID_DRAW_CONFIGURATION');
+  }
+
   const pool = Array.from({ length: max }, (_, index) => index + 1);
   const draw: number[] = [];
 

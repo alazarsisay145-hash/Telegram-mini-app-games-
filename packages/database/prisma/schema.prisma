@@ -154,6 +154,15 @@ model DailyBonus {
   @@map("daily_bonuses")
 }
 
+model DailyBonusConfig {
+  id        String   @id @default("daily-bonus")
+  amount    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("daily_bonus_config")
+}
+
 model LeaderboardEntry {
   id         String   @id @default(uuid())
   userId     String
@@ -165,6 +174,7 @@ model LeaderboardEntry {
 
   @@unique([userId, window, periodKey])
   @@index([userId])
+  @@index([window, periodKey, score])
   @@map("leaderboard_entries")
 }
 

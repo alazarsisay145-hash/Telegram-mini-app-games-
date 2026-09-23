@@ -200,6 +200,9 @@ export const createApp = () => {
   });
   app.get('/api/admin/games', { preHandler: requireAdmin }, async () => ok(await platformService.listGameConfigs()));
   app.patch('/api/admin/games/:id', { preHandler: requireAdmin }, async (request) => {
+    if ((request.params as { id: string }).id !== 'keno') {
+      return fail({ code: 'GAME_NOT_FOUND', message: 'Only the Keno configuration is available right now.' });
+    }
     const payload = adminGameConfigSchema.parse(request.body ?? {});
     return ok(await platformService.updateKenoConfig(request.sessionUser!, payload));
   });

@@ -58,7 +58,16 @@ const getOrCreateKenoConfig = async (tx: Prisma.TransactionClient | PrismaClient
 
 type PrismaClientLike = Pick<
   typeof prisma,
-  'gameConfig' | 'wallet' | 'walletTransaction' | 'game' | 'dailyBonus' | 'user' | 'adminUser' | 'auditLog' | 'leaderboardEntry'
+  | 'gameConfig'
+  | 'wallet'
+  | 'walletTransaction'
+  | 'game'
+  | 'dailyBonus'
+  | 'dailyBonusConfig'
+  | 'user'
+  | 'adminUser'
+  | 'auditLog'
+  | 'leaderboardEntry'
 >;
 
 export class PlatformService {
@@ -97,7 +106,7 @@ export class PlatformService {
           update: {},
           create: {
             userId: user.id,
-            balance: DEFAULT_WELCOME_BONUS,
+            balance: 0,
           },
         });
 
@@ -106,13 +115,17 @@ export class PlatformService {
         });
 
         if (!existingBonus) {
+          const updatedWallet = await tx.wallet.update({
+            where: { id: wallet.id },
+            data: { balance: { increment: DEFAULT_WELCOME_BONUS } },
+          });
           await createWalletTransaction(tx, {
             userId: user.id,
             walletId: wallet.id,
             type: 'WELCOME_BONUS',
             amount: DEFAULT_WELCOME_BONUS,
-            balanceBefore: 0,
-            balanceAfter: DEFAULT_WELCOME_BONUS,
+            balanceBefore: updatedWallet.balance - DEFAULT_WELCOME_BONUS,
+            balanceAfter: updatedWallet.balance,
             referenceType: 'SYSTEM',
             referenceId: user.id,
             description: 'Welcome bonus credits',
@@ -186,7 +199,8 @@ export class PlatformService {
         });
         if (existingGame) {
           if (existingGame.status === 'COMPLETED') {
-            return existingGame;
+            const currentWallet = await tx.wallet.findUniqueOrThrow({ where: { userId: params.userId } });
+            return { game: existingGame, balance: currentWallet.balance };
           }
           throw new Error('GAME_ALREADY_COMPLETED');
         }
@@ -296,7 +310,12 @@ export class PlatformService {
 
         const duplicate = await tx.dailyBonus.findFirst({ where: { userId, idempotencyKey } });
         if (duplicate) {
-          return this.getDailyBonusStatus(userId);
+          const currentWallet = await tx.wallet.findUniqueOrThrow({ where: { userId } });
+          return {
+            amount: duplicate.amount,
+            balance: currentWallet.balance,
+            nextClaimAt: new Date(`${today}T23:59:59.999Z`).toISOString(),
+          };
         }
 
         const existing = await tx.dailyBonus.findUnique({ where: { userId_claimDate: { userId, claimDate: today } } });
@@ -432,10 +451,10 @@ export class PlatformService {
       });
 
       if (typeof input.dailyBonusAmount === 'number') {
-        await tx.gameConfig.upsert({
-          where: { gameType: 'DICE' },
-          update: { config: { dailyBonusAmount: input.dailyBonusAmount } },
-          create: { gameType: 'DICE', enabled: true, config: { dailyBonusAmount: input.dailyBonusAmount } },
+        await tx.dailyBonusConfig.upsert({
+          where: { id: 'daily-bonus' },
+          update: { amount: input.dailyBonusAmount },
+          create: { id: 'daily-bonus', amount: input.dailyBonusAmount },
         });
       }
 
@@ -464,8 +483,8 @@ export class PlatformService {
   }
 
   private async getDailyBonusAmount(tx: PrismaClientLike = prisma) {
-    const config = await tx.gameConfig.findUnique({ where: { gameType: 'DICE' } });
-    const amount = Number((config?.config as { dailyBonusAmount?: number } | null)?.dailyBonusAmount ?? DEFAULT_DAILY_BONUS);
+    const config = await tx.dailyBonusConfig.findUnique({ where: { id: 'daily-bonus' } });
+    const amount = Number(config?.amount ?? DEFAULT_DAILY_BONUS);
     return Number.isFinite(amount) ? amount : DEFAULT_DAILY_BONUS;
   }
 

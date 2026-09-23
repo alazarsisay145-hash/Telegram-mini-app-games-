@@ -9,6 +9,7 @@ Prisma schema: `packages/database/prisma/schema.prisma`
 - `games`
 - `game_configs`
 - `daily_bonuses`
+- `daily_bonus_config`
 - `leaderboard_entries`
 - `admin_users`
 - `audit_logs`
