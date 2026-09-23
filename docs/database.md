@@ -16,7 +16,7 @@ Prisma schema: `packages/database/prisma/schema.prisma`
 - `sessions`
 
 ## Ledger rule
-Balances are only changed through `wallet_transactions` entries created inside DB transactions. Stake deductions and rewards are separate immutable records containing `balance_before` and `balance_after`.
+Wallet balances are mutated inside DB transactions, and every balance mutation is accompanied by an immutable `wallet_transactions` record. Stake deductions and rewards are separate immutable records containing `balance_before` and `balance_after`.
 
 ## Migration commands
 - `npm run prisma:generate`

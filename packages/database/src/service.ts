@@ -22,9 +22,7 @@ const leaderboardPeriodKey = (window: string, date = new Date()) => {
   if (window === 'all-time') return 'all-time';
   if (window === 'monthly') return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
   if (window === 'weekly') {
-    const first = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-    const days = Math.floor((date.getTime() - first.getTime()) / 86400000);
-    return `${date.getUTCFullYear()}-W${String(Math.ceil((days + first.getUTCDay() + 1) / 7)).padStart(2, '0')}`;
+    return startOfWindow('weekly', date).toISOString().slice(0, 10);
   }
   return utcDateKey(date);
 };
@@ -141,8 +139,8 @@ export class PlatformService {
                 walletId: wallet.id,
                 type: 'WELCOME_BONUS',
                 amount: DEFAULT_WELCOME_BONUS,
-                balanceBefore: 0,
-                balanceAfter: DEFAULT_WELCOME_BONUS,
+                balanceBefore: wallet.balance,
+                balanceAfter: wallet.balance + DEFAULT_WELCOME_BONUS,
                 referenceType: 'SYSTEM',
                 referenceId: user.id,
                 description: 'Welcome bonus credits',

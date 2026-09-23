@@ -9,6 +9,7 @@ const envSchema = z.object({
   API_PORT: z.coerce.number().int().positive().default(4000),
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   NEXT_PUBLIC_API_BASE_URL: z.string().url().optional(),
+  ADMIN_APP_URL: z.string().url().optional(),
   NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: z.string().optional(),
 });
 

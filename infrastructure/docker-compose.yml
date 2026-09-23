@@ -18,6 +18,8 @@ services:
         APP_NAME: api
     env_file:
       - ../.env
+    environment:
+      DATABASE_URL: ******postgres:5432/nexus_games?schema=public
     ports:
       - '4000:4000'
     depends_on:
@@ -57,6 +59,8 @@ services:
         APP_NAME: bot
     env_file:
       - ../.env
+    environment:
+      DATABASE_URL: ******postgres:5432/nexus_games?schema=public
     depends_on:
       - api
 

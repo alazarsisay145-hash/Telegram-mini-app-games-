@@ -30,6 +30,8 @@ docker build --build-arg APP_NAME=bot -t nexus-bot .
 docker compose -f infrastructure/docker-compose.yml up --build
 ```
 
+The compose stack includes PostgreSQL and overrides `DATABASE_URL` inside the API and bot containers to use the `postgres` service hostname.
+
 ## Telegram setup
 1. Create a bot with BotFather.
 2. Set the Mini App URL to the deployed `web` app.

@@ -39,8 +39,9 @@ export const AdminConsole = () => {
       setMessage(usersPayload.error.message);
       return;
     }
+    const nextUsers = Array.isArray(usersPayload.data) ? usersPayload.data : [];
     setDashboard(dashboardPayload.data);
-    setUsers(usersPayload.data ?? []);
+    setUsers(nextUsers);
     setMessage('Protected admin data loaded.');
   };
 

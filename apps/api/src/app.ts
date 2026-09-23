@@ -40,6 +40,9 @@ const errorMap: Record<string, { code: any; message: string; statusCode: number 
 
 export const createApp = () => {
   const env = getEnv();
+  const allowedOrigins = [env.TELEGRAM_WEBAPP_URL, env.ADMIN_APP_URL].filter(
+    (origin): origin is string => Boolean(origin),
+  );
   const app = Fastify({
     logger: {
       level: env.NODE_ENV === 'production' ? 'info' : 'debug',
@@ -49,7 +52,7 @@ export const createApp = () => {
   });
 
   app.register(cors, {
-    origin: [env.TELEGRAM_WEBAPP_URL, env.NEXT_PUBLIC_API_BASE_URL ?? env.TELEGRAM_WEBAPP_URL],
+    origin: allowedOrigins,
     credentials: true,
   });
   app.register(helmet);

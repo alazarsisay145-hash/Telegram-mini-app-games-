@@ -213,7 +213,7 @@ export const MiniApp = () => {
             </button>
           ))}
         </div>
-        <PillButton className="mt-4 w-full" onClick={playKeno}>
+        <PillButton className="mt-4 w-full" disabled={loading} onClick={playKeno}>
           {loading ? 'Drawing...' : 'Play Keno'}
         </PillButton>
       </Card>
