@@ -42,11 +42,15 @@ export const getTelegramUserFromInitData = (initData: string, botToken: string) 
     throw new Error('AUTH_INVALID');
   }
 
-  return JSON.parse(rawUser) as {
-    id: number;
-    username?: string;
-    first_name: string;
-    last_name?: string;
-    photo_url?: string;
-  };
+  try {
+    return JSON.parse(rawUser) as {
+      id: number;
+      username?: string;
+      first_name: string;
+      last_name?: string;
+      photo_url?: string;
+    };
+  } catch {
+    throw new Error('AUTH_INVALID');
+  }
 };

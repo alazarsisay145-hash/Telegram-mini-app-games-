@@ -8,11 +8,17 @@ import { buildGameMenuMessage, buildHistoryMessage } from '@nexus/telegram';
 const env = getEnv();
 const bot = new Bot(env.TELEGRAM_BOT_TOKEN);
 const requests = new Map<number, number>();
+const RATE_WINDOW_MS = 800;
 
 const withRateLimit = async (userId: number, action: () => Promise<void>) => {
   const now = Date.now();
+  for (const [key, timestamp] of requests.entries()) {
+    if (now - timestamp > RATE_WINDOW_MS * 10) {
+      requests.delete(key);
+    }
+  }
   const last = requests.get(userId) ?? 0;
-  if (now - last < 800) {
+  if (now - last < RATE_WINDOW_MS) {
     return false;
   }
 

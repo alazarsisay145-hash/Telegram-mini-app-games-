@@ -1,4 +1,15 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: nexus_games
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
   api:
     build:
       context: ..
@@ -9,6 +20,8 @@ services:
       - ../.env
     ports:
       - '4000:4000'
+    depends_on:
+      - postgres
 
   web:
     build:
@@ -46,3 +59,6 @@ services:
       - ../.env
     depends_on:
       - api
+
+volumes:
+  postgres-data:

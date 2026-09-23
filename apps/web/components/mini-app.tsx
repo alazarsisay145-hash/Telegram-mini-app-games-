@@ -45,6 +45,7 @@ export const MiniApp = () => {
   const [bonusStatus, setBonusStatus] = useState<{ amount: number; canClaim: boolean; nextClaimAt: string | null } | null>(null);
   const [message, setMessage] = useState('Authenticate from Telegram to start playing.');
   const [loading, setLoading] = useState(false);
+  const bonusActionLabel = !bonusStatus ? 'Loading bonus...' : bonusStatus.canClaim ? 'Claim now' : 'Claimed today';
 
   const selectedCountLabel = `${selected.length} / 10`;
 
@@ -242,13 +243,16 @@ export const MiniApp = () => {
             type="button"
             className="text-sm font-semibold text-cyan-300 disabled:text-slate-500"
             disabled={!bonusStatus?.canClaim || loading}
+            aria-describedby="daily-bonus-status"
             onClick={claimBonus}
           >
-            Claim now
+            {loading ? 'Claiming...' : bonusActionLabel}
           </button>
         </div>
         <p className="mt-2 text-sm text-slate-300">One claim per UTC day. Server time controls eligibility.</p>
-        <p className="mt-2 text-xs text-slate-400">{bonusStatus?.nextClaimAt ? `Next claim window resets by ${bonusStatus.nextClaimAt}` : RESPONSIBLE_USE_COPY}</p>
+        <p id="daily-bonus-status" className="mt-2 text-xs text-slate-400">
+          {bonusStatus?.nextClaimAt ? `Next claim window resets by ${bonusStatus.nextClaimAt}` : RESPONSIBLE_USE_COPY}
+        </p>
       </Card>
 
       <Card>

@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
+import { ZodError } from 'zod';
 
 import { platformService } from '@nexus/database';
 import {
@@ -200,7 +201,7 @@ export const createApp = () => {
   });
   app.get('/api/admin/games', { preHandler: requireAdmin }, async () => ok(await platformService.listGameConfigs()));
   app.patch('/api/admin/games/:id', { preHandler: requireAdmin }, async (request, reply) => {
-    if ((request.params as { id: string }).id !== 'keno') {
+    if ((request.params as { id: string }).id.toUpperCase() !== 'KENO') {
       return reply
         .code(404)
         .send(fail({ code: 'GAME_NOT_FOUND', message: 'Only the Keno configuration is available right now.' }));
@@ -211,6 +212,10 @@ export const createApp = () => {
   app.get('/api/admin/audit-logs', { preHandler: requireAdmin }, async () => ok(await platformService.listAuditLogs()));
 
   app.setErrorHandler((error, request, reply) => {
+    if (error instanceof ZodError) {
+      return reply.code(400).send(fail({ code: 'VALIDATION_ERROR', message: error.issues[0]?.message ?? 'Invalid request.' }));
+    }
+
     const mapped = error instanceof Error ? errorMap[error.message] : undefined;
     if (mapped) {
       return reply.code(mapped.statusCode).send(fail({ code: mapped.code, message: mapped.message }));

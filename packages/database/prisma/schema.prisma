@@ -102,6 +102,7 @@ model WalletTransaction {
   @@index([userId])
   @@index([createdAt])
   @@index([transactionId])
+  @@unique([userId, type, referenceId])
   @@map("wallet_transactions")
 }
 

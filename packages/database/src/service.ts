@@ -29,6 +29,12 @@ const leaderboardPeriodKey = (window: string, date = new Date()) => {
   return utcDateKey(date);
 };
 
+const kenoConfigPayload = (config: Pick<KenoConfig, 'minStake' | 'maxStake' | 'payoutTable'>) => ({
+  minStake: config.minStake,
+  maxStake: config.maxStake,
+  payoutTable: config.payoutTable,
+});
+
 const createWalletTransaction = async (
   tx: Prisma.TransactionClient,
   params: {
@@ -57,7 +63,7 @@ const getOrCreateKenoConfig = async (tx: Prisma.TransactionClient | PrismaClient
     create: {
       gameType: 'KENO',
       enabled: DEFAULT_KENO_CONFIG.enabled,
-      config: DEFAULT_KENO_CONFIG as unknown as Prisma.InputJsonValue,
+      config: kenoConfigPayload(DEFAULT_KENO_CONFIG) as unknown as Prisma.InputJsonValue,
     },
   });
 
@@ -126,26 +132,34 @@ export class PlatformService {
           where: { userId: user.id, type: 'WELCOME_BONUS' },
         });
 
-        const finalWallet = existingBonus
-          ? wallet
-          : await tx.wallet.update({
-            where: { id: wallet.id },
-            data: { balance: { increment: DEFAULT_WELCOME_BONUS } },
+        if (!existingBonus) {
+          const created = await tx.walletTransaction.createMany({
+            data: [
+              {
+                transactionId: crypto.randomUUID(),
+                userId: user.id,
+                walletId: wallet.id,
+                type: 'WELCOME_BONUS',
+                amount: DEFAULT_WELCOME_BONUS,
+                balanceBefore: 0,
+                balanceAfter: DEFAULT_WELCOME_BONUS,
+                referenceType: 'SYSTEM',
+                referenceId: user.id,
+                description: 'Welcome bonus credits',
+              },
+            ],
+            skipDuplicates: true,
           });
 
-        if (!existingBonus) {
-          await createWalletTransaction(tx, {
-            userId: user.id,
-            walletId: wallet.id,
-            type: 'WELCOME_BONUS',
-            amount: DEFAULT_WELCOME_BONUS,
-            balanceBefore: finalWallet.balance - DEFAULT_WELCOME_BONUS,
-            balanceAfter: finalWallet.balance,
-            referenceType: 'SYSTEM',
-            referenceId: user.id,
-            description: 'Welcome bonus credits',
-          });
+          if (created.count === 1) {
+            await tx.wallet.update({
+              where: { id: wallet.id },
+              data: { balance: { increment: DEFAULT_WELCOME_BONUS } },
+            });
+          }
         }
+
+        const finalWallet = await tx.wallet.findUniqueOrThrow({ where: { id: wallet.id } });
 
         const admin = await tx.adminUser.findUnique({ where: { userId: user.id } });
 
@@ -461,8 +475,15 @@ export class PlatformService {
 
       const config = await tx.gameConfig.upsert({
         where: { gameType: 'KENO' },
-        update: { enabled: nextConfig.enabled, config: nextConfig },
-        create: { gameType: 'KENO', enabled: nextConfig.enabled, config: nextConfig },
+        update: {
+          enabled: nextConfig.enabled,
+          config: kenoConfigPayload(nextConfig) as unknown as Prisma.InputJsonValue,
+        },
+        create: {
+          gameType: 'KENO',
+          enabled: nextConfig.enabled,
+          config: kenoConfigPayload(nextConfig) as unknown as Prisma.InputJsonValue,
+        },
       });
 
       if (typeof input.dailyBonusAmount === 'number') {
