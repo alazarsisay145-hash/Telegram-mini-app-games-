@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "declaration": true,
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@nexus/shared/*": ["packages/shared/src/*"],
+      "@nexus/shared": ["packages/shared/src/index.ts"],
+      "@nexus/database/*": ["packages/database/src/*"],
+      "@nexus/database": ["packages/database/src/index.ts"],
+      "@nexus/telegram/*": ["packages/telegram/src/*"],
+      "@nexus/telegram": ["packages/telegram/src/index.ts"],
+      "@nexus/game-engine/*": ["packages/game-engine/src/*"],
+      "@nexus/game-engine": ["packages/game-engine/src/index.ts"],
+      "@nexus/security/*": ["packages/security/src/*"],
+      "@nexus/security": ["packages/security/src/index.ts"],
+      "@nexus/ui/*": ["packages/ui/src/*"],
+      "@nexus/ui": ["packages/ui/src/index.ts"]
+    }
+  }
+}
