@@ -25,24 +25,28 @@ export const AdminConsole = () => {
 
   const load = async () => {
     if (!headers) return;
-    const [dashboardResponse, usersResponse] = await Promise.all([
-      fetch(`${apiBaseUrl}/api/admin/dashboard`, { headers }),
-      fetch(`${apiBaseUrl}/api/admin/users`, { headers }),
-    ]);
-    const dashboardPayload = await dashboardResponse.json();
-    const usersPayload = await usersResponse.json();
-    if (!dashboardPayload.success) {
-      setMessage(dashboardPayload.error.message);
-      return;
+    try {
+      const [dashboardResponse, usersResponse] = await Promise.all([
+        fetch(`${apiBaseUrl}/api/admin/dashboard`, { headers }),
+        fetch(`${apiBaseUrl}/api/admin/users`, { headers }),
+      ]);
+      const dashboardPayload = await dashboardResponse.json();
+      const usersPayload = await usersResponse.json();
+      if (!dashboardPayload.success) {
+        setMessage(dashboardPayload.error.message);
+        return;
+      }
+      if (!usersPayload.success) {
+        setMessage(usersPayload.error.message);
+        return;
+      }
+      const nextUsers = Array.isArray(usersPayload.data) ? usersPayload.data : [];
+      setDashboard(dashboardPayload.data);
+      setUsers(nextUsers);
+      setMessage('Protected admin data loaded.');
+    } catch {
+      setMessage('Admin data could not be loaded. Check the API connection and try again.');
     }
-    if (!usersPayload.success) {
-      setMessage(usersPayload.error.message);
-      return;
-    }
-    const nextUsers = Array.isArray(usersPayload.data) ? usersPayload.data : [];
-    setDashboard(dashboardPayload.data);
-    setUsers(nextUsers);
-    setMessage('Protected admin data loaded.');
   };
 
   return (

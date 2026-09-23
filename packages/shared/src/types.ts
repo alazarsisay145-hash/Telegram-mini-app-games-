@@ -20,6 +20,7 @@ export interface ApiErrorShape {
     | 'GAME_NOT_FOUND'
     | 'GAME_ALREADY_COMPLETED'
     | 'INVALID_NUMBERS'
+    | 'INVALID_GUESS'
     | 'INVALID_STAKE'
     | 'RATE_LIMITED'
     | 'UNAUTHORIZED'

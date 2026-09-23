@@ -225,11 +225,8 @@ export class PlatformService {
           where: { userId_idempotencyKey: { userId: params.userId, idempotencyKey: params.idempotencyKey } },
         });
         if (existingGame) {
-          if (existingGame.status === 'COMPLETED') {
-            const currentWallet = await tx.wallet.findUniqueOrThrow({ where: { userId: params.userId } });
-            return { game: existingGame, balance: currentWallet.balance };
-          }
-          throw new Error('GAME_ALREADY_COMPLETED');
+          const currentWallet = await tx.wallet.findUniqueOrThrow({ where: { userId: params.userId } });
+          return { game: existingGame, balance: currentWallet.balance };
         }
 
         const config = await getOrCreateKenoConfig(tx);
@@ -471,6 +468,10 @@ export class PlatformService {
         payoutTable: input.payoutTable ?? current.payoutTable,
       };
 
+      if (nextConfig.minStake > nextConfig.maxStake) {
+        throw new Error('INVALID_STAKE');
+      }
+
       const config = await tx.gameConfig.upsert({
         where: { gameType: 'KENO' },
         update: {
@@ -519,7 +520,7 @@ export class PlatformService {
   private async getDailyBonusAmount(tx: PrismaClientLike = prisma) {
     const config = await tx.dailyBonusConfig.findUnique({ where: { id: 'daily-bonus' } });
     const amount = Number(config?.amount ?? DEFAULT_DAILY_BONUS);
-    return Number.isFinite(amount) ? amount : DEFAULT_DAILY_BONUS;
+    return Number.isInteger(amount) && amount > 0 ? amount : DEFAULT_DAILY_BONUS;
   }
 
   private async refreshLeaderboards(tx: Prisma.TransactionClient, userId: string) {

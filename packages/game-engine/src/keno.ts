@@ -34,7 +34,7 @@ export class KenoEngine {
   }
 
   calculateReward(input: KenoInput, result: KenoResult): number {
-    return result.payout ?? this.resolve(input).payout;
+    return input.stake * result.multiplier;
   }
 
   getResult(input: KenoInput): KenoResult {

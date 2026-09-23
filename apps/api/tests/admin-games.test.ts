@@ -64,4 +64,16 @@ describe('admin game config route', () => {
       },
     });
   });
+
+  it('accepts mixed-case keno route ids', async () => {
+    const token = await signSessionToken({ id: 'admin-1', telegramId: '42', role: 'ADMIN' }, process.env.JWT_SECRET!);
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/games/KeNo',
+      headers: { authorization: 'Bearer ' + token },
+      payload: { maxStake: 1000 },
+    });
+
+    expect(response.statusCode).toBe(200);
+  });
 });

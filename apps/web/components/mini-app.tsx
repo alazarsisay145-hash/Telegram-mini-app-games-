@@ -113,6 +113,10 @@ export const MiniApp = () => {
 
   const playKeno = async () => {
     if (!authHeaders) return;
+    if (selected.length === 0) {
+      setMessage('Pick at least one number before starting Keno.');
+      return;
+    }
     setLoading(true);
     setMessage('Drawing secure numbers...');
     try {
@@ -135,6 +139,8 @@ export const MiniApp = () => {
       const historyResponse = await fetch(`${apiBaseUrl}/api/me/history`, { headers: authHeaders });
       const historyPayload = await historyResponse.json();
       if (historyPayload.success) setHistory(historyPayload.data.items);
+    } catch {
+      setMessage('Keno request failed. Check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -213,7 +219,7 @@ export const MiniApp = () => {
             </button>
           ))}
         </div>
-        <PillButton className="mt-4 w-full" disabled={loading} onClick={playKeno}>
+        <PillButton className="mt-4 w-full" disabled={loading || selected.length === 0 || !authHeaders} onClick={playKeno}>
           {loading ? 'Drawing...' : 'Play Keno'}
         </PillButton>
       </Card>

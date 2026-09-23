@@ -32,6 +32,7 @@ const errorMap: Record<string, { code: any; message: string; statusCode: number 
   GAME_NOT_FOUND: { code: 'GAME_NOT_FOUND', message: 'The requested game could not be found.', statusCode: 404 },
   GAME_ALREADY_COMPLETED: { code: 'GAME_ALREADY_COMPLETED', message: 'This game request was already completed.', statusCode: 409 },
   INVALID_NUMBERS: { code: 'INVALID_NUMBERS', message: 'Selected numbers are invalid.', statusCode: 400 },
+  INVALID_GUESS: { code: 'INVALID_GUESS', message: 'Guess input is invalid.', statusCode: 400 },
   INVALID_STAKE: { code: 'INVALID_STAKE', message: 'Stake is outside the allowed range.', statusCode: 400 },
   RATE_LIMITED: { code: 'RATE_LIMITED', message: 'Too many requests. Please slow down.', statusCode: 429 },
   UNAUTHORIZED: { code: 'UNAUTHORIZED', message: 'Authentication is required.', statusCode: 401 },

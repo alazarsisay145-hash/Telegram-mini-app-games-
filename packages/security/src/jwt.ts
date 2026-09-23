@@ -16,9 +16,13 @@ export const signSessionToken = async (payload: SessionUser, secret: string) =>
 
 export const verifySessionToken = async (token: string, secret: string): Promise<SessionUser> => {
   const { payload } = await jwtVerify(token, getKey(secret));
+  if (typeof payload.sub !== 'string' || typeof payload.telegramId !== 'string' || payload.sub.length === 0 || payload.telegramId.length === 0) {
+    throw new Error('AUTH_INVALID');
+  }
+
   return {
-    id: payload.sub ?? '',
-    telegramId: String(payload.telegramId ?? ''),
+    id: payload.sub,
+    telegramId: payload.telegramId,
     role: (payload.role ?? null) as AdminRole | null,
   };
 };
