@@ -19,9 +19,14 @@ export const verifyTelegramInitData = (initData: string, botToken: string): Reco
   const secret = createHmac('sha256', 'WebAppData').update(botToken).digest();
   const signature = createHmac('sha256', secret).update(dataCheckString).digest('hex');
 
+  const signatureBytes = Buffer.from(signature, 'hex');
+  const hashBytes = Buffer.from(hash, 'hex');
+
   if (
-    signature.length !== hash.length ||
-    !timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(hash, 'hex'))
+    signatureBytes.length === 0 ||
+    hashBytes.length === 0 ||
+    signatureBytes.length !== hashBytes.length ||
+    !timingSafeEqual(signatureBytes, hashBytes)
   ) {
     throw new Error('AUTH_INVALID');
   }

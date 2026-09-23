@@ -190,6 +190,7 @@ export const MiniApp = () => {
             return (
               <button
                 key={value}
+                aria-pressed={active}
                 type="button"
                 onClick={() => toggleNumber(value)}
                 className={`min-h-12 rounded-2xl border text-sm font-semibold ${active ? 'border-cyan-300 bg-cyan-300 text-slate-950' : 'border-white/10 bg-white/5 text-white'}`}

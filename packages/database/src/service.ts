@@ -6,6 +6,18 @@ import { prisma } from './client';
 
 const utcDateKey = (date = new Date()) => date.toISOString().slice(0, 10);
 
+const startOfWindow = (window: 'daily' | 'weekly' | 'monthly' | 'all-time', date = new Date()) => {
+  if (window === 'all-time') return new Date(0);
+  if (window === 'monthly') return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
+  if (window === 'weekly') {
+    const currentDay = date.getUTCDay() || 7;
+    const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    start.setUTCDate(start.getUTCDate() - currentDay + 1);
+    return start;
+  }
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+};
+
 const leaderboardPeriodKey = (window: string, date = new Date()) => {
   if (window === 'all-time') return 'all-time';
   if (window === 'monthly') return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -114,18 +126,21 @@ export class PlatformService {
           where: { userId: user.id, type: 'WELCOME_BONUS' },
         });
 
-        if (!existingBonus) {
-          const updatedWallet = await tx.wallet.update({
+        const finalWallet = existingBonus
+          ? wallet
+          : await tx.wallet.update({
             where: { id: wallet.id },
             data: { balance: { increment: DEFAULT_WELCOME_BONUS } },
           });
+
+        if (!existingBonus) {
           await createWalletTransaction(tx, {
             userId: user.id,
             walletId: wallet.id,
             type: 'WELCOME_BONUS',
             amount: DEFAULT_WELCOME_BONUS,
-            balanceBefore: updatedWallet.balance - DEFAULT_WELCOME_BONUS,
-            balanceAfter: updatedWallet.balance,
+            balanceBefore: finalWallet.balance - DEFAULT_WELCOME_BONUS,
+            balanceAfter: finalWallet.balance,
             referenceType: 'SYSTEM',
             referenceId: user.id,
             description: 'Welcome bonus credits',
@@ -136,7 +151,7 @@ export class PlatformService {
 
         return {
           user,
-          wallet,
+          wallet: finalWallet,
           role: admin?.role ?? null,
         };
       },
@@ -491,10 +506,23 @@ export class PlatformService {
   private async refreshLeaderboards(tx: Prisma.TransactionClient, userId: string) {
     const wallet = await tx.wallet.findUniqueOrThrow({ where: { userId } });
     for (const window of ['daily', 'weekly', 'monthly', 'all-time'] as const) {
+      const score =
+        window === 'all-time'
+          ? wallet.balance
+          : (
+              await tx.walletTransaction.aggregate({
+                where: {
+                  userId,
+                  createdAt: { gte: startOfWindow(window) },
+                },
+                _sum: { amount: true },
+              })
+            )._sum.amount ?? 0;
+
       await tx.leaderboardEntry.upsert({
         where: { userId_window_periodKey: { userId, window, periodKey: leaderboardPeriodKey(window) } },
-        update: { score: wallet.balance },
-        create: { userId, window, periodKey: leaderboardPeriodKey(window), score: wallet.balance },
+        update: { score },
+        create: { userId, window, periodKey: leaderboardPeriodKey(window), score },
       });
     }
   }

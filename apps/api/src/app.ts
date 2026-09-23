@@ -199,9 +199,11 @@ export const createApp = () => {
     return ok(await platformService.updateUserStatus(request.sessionUser!, request.params.id, status));
   });
   app.get('/api/admin/games', { preHandler: requireAdmin }, async () => ok(await platformService.listGameConfigs()));
-  app.patch('/api/admin/games/:id', { preHandler: requireAdmin }, async (request) => {
+  app.patch('/api/admin/games/:id', { preHandler: requireAdmin }, async (request, reply) => {
     if ((request.params as { id: string }).id !== 'keno') {
-      return fail({ code: 'GAME_NOT_FOUND', message: 'Only the Keno configuration is available right now.' });
+      return reply
+        .code(404)
+        .send(fail({ code: 'GAME_NOT_FOUND', message: 'Only the Keno configuration is available right now.' }));
     }
     const payload = adminGameConfigSchema.parse(request.body ?? {});
     return ok(await platformService.updateKenoConfig(request.sessionUser!, payload));
